@@ -7,6 +7,7 @@
 
         <!-- Bouton Add à droite -->
         <ion-buttons slot="end">
+          <ion-badge v-if="auth.isLoggedIn">{{ auth.user?.email }}</ion-badge>
           <ion-button @click="openCreate()">+ Add</ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -173,6 +174,9 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useCardsStore } from '@/stores/cardsStore'
 import type { Card, CardInsert, Rarity, Role } from '@/types/Card'
+import { useAuthStore } from '@/stores/authStore'
+
+const auth = useAuthStore()
 
 /**
  * Imports Ionic : uniquement ce qu’on utilise

@@ -4,6 +4,7 @@ import router from './router';
 
 import {IonicVue} from '@ionic/vue';
 import {createPinia} from 'pinia';
+import {useAuthStore} from '@/stores/authStore';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -35,12 +36,22 @@ import '@ionic/vue/css/palettes/dark.system.css';
 /* Theme variables */
 import './theme/variables.css';
 
+// 🔹 Création de l’app
 const app = createApp(App)
     .use(IonicVue)
-    .use(createPinia())
-    .use(router);
 
+// 🔹 IMPORTANT : on garde une référence à Pinia
+const pinia = createPinia()
+app.use(pinia)
 
+// 🔹 Router inchangé
+app.use(router)
+
+// 🔹 INITIALISATION AUTH (1 seule fois)
+const authStore = useAuthStore(pinia)
+authStore.init()
+
+// 🔹 Mount final inchangé
 router.isReady().then(() => {
-    app.mount('#app');
-});
+    app.mount('#app')
+})

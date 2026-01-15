@@ -5,6 +5,7 @@ import router from './router';
 import {IonicVue} from '@ionic/vue';
 import {createPinia} from 'pinia';
 import {useAuthStore} from '@/stores/authStore';
+import {useNetworkStore} from '@/stores/networkStore';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -43,6 +44,10 @@ const app = createApp(App)
 // 🔹 IMPORTANT : on garde une référence à Pinia
 const pinia = createPinia()
 app.use(pinia)
+
+// 🔹 Initialisation réseau (1 seule fois)
+const networkStore = useNetworkStore(pinia)
+networkStore.init()
 
 // 🔹 Router inchangé
 app.use(router)

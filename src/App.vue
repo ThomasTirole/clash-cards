@@ -10,11 +10,18 @@ import { IonApp, IonRouterOutlet } from '@ionic/vue';
 import { watch, onMounted } from 'vue'
 import { toastController } from '@ionic/vue'
 import { useNetworkStore } from '@/stores/networkStore'
+import { syncOfflineQueue } from '@/services/syncService'
+import {upsertManyLocalCards} from "@/services/cardsLocalService";
+import {fetchCards} from "@/services/cardsService";
+import {useCardsStore} from "@/stores/cardsStore";
+
 
 /**
  * Store réseau global
  */
 const network = useNetworkStore()
+
+const cardsStore = useCardsStore()
 
 /**
  * Fonction utilitaire : affiche un toast simple
@@ -42,6 +49,10 @@ onMounted(async () => {
   // Toast résultat
   if (network.connected) {
     await showToast('🟢 Connecté au réseau')
+    const cloudCards = await fetchCards()
+    await upsertManyLocalCards(cloudCards)
+    await cardsStore.loadFromLocal()
+    // await syncOfflineQueue()
   } else {
     await showToast('🔴 Réseau déconnecté (mode hors-ligne)')
   }
@@ -61,6 +72,8 @@ watch(
         await showToast('🔴 Réseau déconnecté (mode hors-ligne)')
       } else {
         await showToast('🟢 Connecté au réseau')
+        // ✅ Réseau revenu : on lance la synchronisation
+        await syncOfflineQueue()
       }
     },
     { immediate: true }

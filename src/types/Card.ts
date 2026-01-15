@@ -72,9 +72,9 @@ export interface CardLocal extends CardCloud {
  * - Supabase gère `created_at` et `updated_at` via defaults / triggers.
  */
 
-// ✅ INSERT cloud : on envoie id + champs métier
-// ❌ On n’envoie pas created_at / updated_at (gérés côté Supabase)
-export type CardInsert = Omit<CardCloud, 'created_at' | 'updated_at'>
+
+// ❌ On n’envoie pas created_at / updated_at (gérés côté Supabase) et l'id est sera randomisé plus tard dans l'app.
+export type CardInsert = Omit<CardCloud, 'id' | 'created_at' | 'updated_at'>
 
 // ✅ UPDATE cloud : champs optionnels, mais jamais l’id
 export type CardUpdate = Partial<Omit<CardInsert, 'id'>>

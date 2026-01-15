@@ -6,7 +6,6 @@ import {IonicVue} from '@ionic/vue';
 import {createPinia} from 'pinia';
 import {useAuthStore} from '@/stores/authStore';
 import {useNetworkStore} from '@/stores/networkStore';
-import { defineCustomElements as jeepSqlite } from 'jeep-sqlite/loader'
 import { initDB } from "@/services/sqliteService";
 
 
@@ -40,32 +39,34 @@ import '@ionic/vue/css/palettes/dark.system.css';
 /* Theme variables */
 import './theme/variables.css';
 
+async function bootstrap() {
+
 // 🔹 Création de l’app
-const app = createApp(App)
-    .use(IonicVue)
+    const app = createApp(App)
+        .use(IonicVue)
 
 // 🔹 IMPORTANT : on garde une référence à Pinia
-const pinia = createPinia()
-app.use(pinia)
+    const pinia = createPinia()
+    app.use(pinia)
 
 // 🔹 Initialisation réseau (1 seule fois)
-const networkStore = useNetworkStore(pinia)
-networkStore.init()
+    const networkStore = useNetworkStore(pinia)
+    networkStore.init()
 
 // 🔹 Router inchangé
-app.use(router)
+    app.use(router)
 
 // 🔹 INITIALISATION AUTH (1 seule fois)
-const authStore = useAuthStore(pinia)
-authStore.init()
-
-// 🔹 SQLite Web (IndexedDB)
-jeepSqlite(window)
+    const authStore = useAuthStore(pinia)
+    authStore.init()
 
 // Initialisation SQLite
-await initDB()
+    await initDB()
 
 // 🔹 Mount final inchangé
-router.isReady().then(() => {
-    app.mount('#app')
-})
+    router.isReady().then(() => {
+        app.mount('#app')
+    })
+}
+
+bootstrap()

@@ -1,4 +1,3 @@
-import { Capacitor } from '@capacitor/core'
 import {
     CapacitorSQLite,
     SQLiteConnection,
@@ -15,6 +14,7 @@ let db: SQLiteDBConnection | null = null
 /**
  * Petit helper : attendre que <jeep-sqlite> soit prêt sur le Web
  */
+/*
 async function waitForJeepSqlite() {
     if (Capacitor.getPlatform() !== 'web') return
 
@@ -32,7 +32,7 @@ async function waitForJeepSqlite() {
         await el.componentOnReady()
     }
 }
-
+*/
 
 /**
  * Initialise la base SQLite locale
@@ -42,7 +42,12 @@ async function waitForJeepSqlite() {
 export async function initDB() {
 
     // Sur le Web, attendre que <jeep-sqlite> soit prêt
-    await waitForJeepSqlite()
+    //await waitForJeepSqlite()
+/*
+    // ✅ IMPORTANT pour le Web (IndexedDB via jeep-sqlite)
+    if (Capacitor.getPlatform() === 'web') {
+        await sqlite.initWebStore()
+    }*/
 
     // Ouverture (ou création) de la base locale
     db = await sqlite.createConnection(
@@ -59,14 +64,19 @@ export async function initDB() {
     const createTableSQL = `
         CREATE TABLE IF NOT EXISTS cards (
                                              id TEXT PRIMARY KEY NOT NULL,
-                                             title TEXT NOT NULL,
-                                             description TEXT,
-                                             rarity TEXT,
+                                             name TEXT NOT NULL,
+                                             rarity TEXT NOT NULL,
+                                             elixir_cost INTEGER NOT NULL,
+                                             role TEXT NOT NULL,
+                                             hitpoints INTEGER NOT NULL,
+                                             damage INTEGER NOT NULL,
+                                             arena INTEGER NOT NULL,
+                                             is_favorite INTEGER NOT NULL,
+                                             created_at TEXT NOT NULL,
                                              updated_at TEXT NOT NULL,
                                              synced INTEGER NOT NULL
         );
     `
-
     await db.execute(createTableSQL)
 }
 

@@ -1,12 +1,12 @@
 import { supabase } from '@/lib/supabase'
-import type { Card, CardInsert, CardUpdate } from '@/types/Card'
+import type { CardCloud, CardInsert, CardUpdate } from '@/types/Card'
 
 /**
  * Récupère toutes les cartes depuis Supabase.
  * - select('*') : récupère toutes les colonnes
  * - order('created_at') : tri pour afficher les plus récentes en premier
  */
-export async function fetchCards(): Promise<Card[]> {
+export async function fetchCards(): Promise<CardCloud[]> {
     const { data, error } = await supabase
         .from('cards') // table
         .select('*')
@@ -16,7 +16,7 @@ export async function fetchCards(): Promise<Card[]> {
     if (error) throw error
 
     // data peut être null, donc on retourne [] par défaut
-    return (data ?? []) as Card[]
+    return (data ?? []) as CardCloud[]
 }
 
 /**
@@ -24,7 +24,7 @@ export async function fetchCards(): Promise<Card[]> {
  * - insert(payload) : ajoute une ligne
  * - select('*').single() : on veut récupérer la ligne créée directement
  */
-export async function createCard(payload: CardInsert): Promise<Card> {
+export async function createCard(payload: CardInsert): Promise<CardCloud> {
     const { data, error } = await supabase
         .from('cards')
         .insert(payload)
@@ -32,7 +32,7 @@ export async function createCard(payload: CardInsert): Promise<Card> {
         .single()      // on veut un objet (pas un tableau)
 
     if (error) throw error
-    return data as Card
+    return data as CardCloud
 }
 
 /**
@@ -41,7 +41,7 @@ export async function createCard(payload: CardInsert): Promise<Card> {
  * - eq('id', id) : cible la bonne carte
  * - select('*').single() : renvoie la carte mise à jour
  */
-export async function updateCard(id: string, patch: CardUpdate): Promise<Card> {
+export async function updateCard(id: string, patch: CardUpdate): Promise<CardCloud> {
     const { data, error } = await supabase
         .from('cards')
         .update(patch)
@@ -50,7 +50,7 @@ export async function updateCard(id: string, patch: CardUpdate): Promise<Card> {
         .single()
 
     if (error) throw error
-    return data as Card
+    return data as CardCloud
 }
 
 /**

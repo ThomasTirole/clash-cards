@@ -1,5 +1,6 @@
 import { getDB } from '@/services/sqliteService'
 import type { CardCloud, CardLocal } from '@/types/Card'
+import { enqueue, makeCreateAction, makeUpdateAction, makeDeleteAction } from '@/services/offlineQueueService'
 
 /**
  * Récupère toutes les cartes depuis SQLite
@@ -56,6 +57,8 @@ export async function createLocalCard(card: CardLocal): Promise<void> {
             0 // ✅ offline-first : modification locale en attente
         ]
     )
+    // ✅ On ajoute une action CREATE dans la queue
+    await enqueue(makeCreateAction({ ...card, synced: 0 }))
 }
 
 /**
@@ -97,6 +100,8 @@ export async function updateLocalCard(card: CardLocal): Promise<void> {
             card.id
         ]
     )
+    // On pousse l’action UPDATE dans la queue
+    await enqueue(makeUpdateAction({ ...card, synced: 0, updated_at: now }))
 }
 
 /**
@@ -106,6 +111,8 @@ export async function updateLocalCard(card: CardLocal): Promise<void> {
 export async function deleteLocalCard(id: string): Promise<void> {
     const db = getDB()
     await db.run('DELETE FROM cards WHERE id = ?;', [id])
+    // On pousse l’action DELETE dans la queue
+    await enqueue(makeDeleteAction(id))
 }
 
 /**

@@ -6,6 +6,8 @@ import {IonicVue} from '@ionic/vue';
 import {createPinia} from 'pinia';
 import {useAuthStore} from '@/stores/authStore';
 import {useNetworkStore} from '@/stores/networkStore';
+import { defineCustomElements as jeepSqlite } from 'jeep-sqlite/loader'
+
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -55,6 +57,9 @@ app.use(router)
 // 🔹 INITIALISATION AUTH (1 seule fois)
 const authStore = useAuthStore(pinia)
 authStore.init()
+
+// 🔹 SQLite Web (IndexedDB)
+jeepSqlite(window)
 
 // 🔹 Mount final inchangé
 router.isReady().then(() => {

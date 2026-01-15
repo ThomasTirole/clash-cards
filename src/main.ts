@@ -7,6 +7,7 @@ import {createPinia} from 'pinia';
 import {useAuthStore} from '@/stores/authStore';
 import {useNetworkStore} from '@/stores/networkStore';
 import { defineCustomElements as jeepSqlite } from 'jeep-sqlite/loader'
+import { initDB } from "@/services/sqliteService";
 
 
 /* Core CSS required for Ionic components to work properly */
@@ -60,6 +61,9 @@ authStore.init()
 
 // 🔹 SQLite Web (IndexedDB)
 jeepSqlite(window)
+
+// Initialisation SQLite
+await initDB()
 
 // 🔹 Mount final inchangé
 router.isReady().then(() => {

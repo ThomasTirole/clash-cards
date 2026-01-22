@@ -1,77 +1,149 @@
 import { defineStore } from 'pinia'
-import type { Card, CardInsert, CardUpdate } from '@/types/Card'
-import * as api from '@/services/cardsService'
+import { useNetworkStore } from '@/stores/networkStore'
+import { useAuthStore } from '@/stores/authStore'
+import type { CardInsert, CardLocal, CardUpdate } from '@/types/Card'
 
-/**
- * Le store = “source de vérité” (state centralisé).
- * L’UI lit le state et déclenche des actions.
- */
+import {
+    getAllLocalCards,
+    createLocalCard,
+    updateLocalCard,
+    deleteLocalCard
+} from '@/services/cardsLocalService'
+
+import { syncOfflineQueue } from '@/services/syncService'
+
 export const useCardsStore = defineStore('cards', {
     state: () => ({
-        cards: [] as Card[],
+        cards: [] as CardLocal[],
         loading: false,
-        error: '' as string | null
+        error: null as string | null
     }),
 
     actions: {
         /**
-         * Charge la liste depuis Supabase.
-         * loading/error permettent d’afficher un spinner ou un message.
+         * Source de vérité : SQLite
          */
-        async load() {
+        async loadFromLocal() {
             this.loading = true
             this.error = null
 
             try {
-                this.cards = await api.fetchCards()
+                this.cards = await getAllLocalCards()
             } catch (e: any) {
-                this.error = e?.message ?? 'Erreur de chargement'
+                this.error = e?.message ?? 'Erreur de chargement local'
             } finally {
                 this.loading = false
             }
         },
 
         /**
-         * Ajoute une carte en DB + met à jour le store immédiatement.
+         * Sync automatique si online
+         */
+        async syncIfPossible() {
+            const network = useNetworkStore()
+            const auth = useAuthStore()
+
+            if (!network.connected) return
+            if (!auth.user) return
+
+            await syncOfflineQueue()
+        },
+
+        /**
+         * Ajout offline-first
+         * -> SQLite + queue (géré dans le service)
          */
         async add(payload: CardInsert) {
             this.error = null
-            const created = await api.createCard(payload)
+            this.loading = true
+            try {
+                const now = new Date().toISOString()
 
-            // On ajoute en tête pour la voir directement dans l’UI
-            this.cards = [created, ...this.cards]
+                const localCard: CardLocal = {
+                    id: crypto.randomUUID(),
+                    ...payload,
+                    created_at: now,
+                    updated_at: now,
+                    synced: 0
+                }
+
+                await createLocalCard(localCard)
+
+                await this.syncIfPossible()
+                await this.loadFromLocal()
+            } catch (e: any) {
+                this.error = e?.message ?? 'Erreur ajout'
+            } finally {
+                this.loading = false
+            }
         },
 
         /**
-         * Modifie une carte en DB + remplace la version dans le store.
+         * Update offline-first
          */
         async edit(id: string, patch: CardUpdate) {
             this.error = null
-            const updated = await api.updateCard(id, patch)
+            this.loading = true
+            try {
+                const current = this.cards.find(c => c.id === id)
+                if (!current) return
 
-            // Remplace l’élément modifié sans recharger toute la liste
-            this.cards = this.cards.map(c => (c.id === id ? updated : c))
+                const updated: CardLocal = {
+                    ...current,
+                    ...patch,
+                    synced: 0
+                }
+
+                await updateLocalCard(updated)
+                await this.syncIfPossible()
+                await this.loadFromLocal()
+            } catch (e: any) {
+                this.error = e?.message ?? 'Erreur mise à jour'
+            } finally {
+                this.loading = false
+            }
         },
 
         /**
-         * Supprime en DB + supprime dans le store.
+         * Delete offline-first
          */
         async remove(id: string) {
             this.error = null
-            await api.deleteCard(id)
+            this.loading = true
+            try {
+                await deleteLocalCard(id)
 
-            this.cards = this.cards.filter(c => c.id !== id)
+                await this.syncIfPossible()
+                await this.loadFromLocal()
+            } catch (e: any) {
+                this.error = e?.message ?? 'Erreur suppression'
+            } finally {
+                this.loading = false
+            }
+        },
+
+        async refresh(): Promise<void> {
+            this.error = null
+            try {
+                await this.syncIfPossible()
+                await this.loadFromLocal()
+            } catch (e: any) {
+                this.error = e?.message ?? 'Erreur de rafraîchissement'
+            }
+        },
+
+        async toggleFavorite(id: string) {
+            const card = this.cards.find(c => c.id === id)
+            if (!card) return
+            await this.edit(id, { is_favorite: !card.is_favorite })
         },
 
         /**
-         * Toggle “favori” : on lit d’abord dans le store puis on update.
-         * (Petite logique métier côté front)
+         * Sync manuel (debug / bouton)
          */
-        async toggleFavorite(id: string) {
-            const current = this.cards.find(c => c.id === id)
-            if (!current) return
-
-            await this.edit(id, { is_favorite: !current.is_favorite })
+        async syncNow() {
+            await syncOfflineQueue()
+            await this.loadFromLocal()
         }
     }
 })

@@ -46,7 +46,7 @@ export async function syncOfflineQueue(): Promise<void> {
 
     try {
         const queue = await getQueue()
-        if (queue.length === 0) return
+        // if (queue.length === 0) return
 
         // 1️⃣ Rejouer chaque action offline
         for (const action of queue) {

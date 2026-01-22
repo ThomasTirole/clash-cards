@@ -287,7 +287,7 @@ async function submit() {
 }
 
 async function onRefresh(ev: CustomEvent) {
-  await store.loadFromLocal()
+  await store.refresh()
   const refresher = ev.target as HTMLIonRefresherElement
   refresher.complete()
 }

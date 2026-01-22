@@ -173,7 +173,7 @@
  */
 import { reactive, ref, onMounted } from 'vue'
 import { useCardsStore } from '@/stores/cardsStore'
-import type { Card, CardInsert, Rarity, Role } from '@/types/Card'
+import type { CardLocal, CardInsert, Rarity, Role } from '@/types/Card'
 import { useAuthStore } from '@/stores/authStore'
 
 const auth = useAuthStore()
@@ -194,7 +194,7 @@ import {
 /**
  * Store Pinia :
  * - store.cards = données
- * - store.load() = charge depuis Supabase
+ * - store.loadFromLocal() = charge depuis SQLite
  */
 const store = useCardsStore()
 
@@ -205,7 +205,7 @@ const modalOpen = ref(false)
  * editing = null => mode “create”
  * editing = Card => mode “edit”
  */
-const editing = ref<null | Card>(null)
+const editing = ref<null | CardLocal>(null)
 
 /**
  * Formulaire (valeurs par défaut).
@@ -224,7 +224,7 @@ const form = reactive<CardInsert>({
 
 /** Au chargement de la page, on récupère les cartes */
 onMounted(() => {
-  store.load()
+  store.loadFromLocal()
 })
 
 /** Remet le form dans son état “neuf” */
@@ -247,7 +247,7 @@ function openCreate() {
 }
 
 /** Ouvre le modal en mode édition et copie la carte dans le form */
-function openEdit(card: Card) {
+function openEdit(card: CardLocal) {
   editing.value = card
 
   // On copie les champs dans le formulaire
@@ -286,17 +286,12 @@ async function submit() {
   closeModal()
 }
 
-/** Pull-to-refresh : recharge depuis Supabase */
 async function onRefresh(ev: CustomEvent) {
-  // 1. Recharger les données depuis Supabase
-  await store.load()
-
-  // 2. Récupérer le composant ion-refresher
+  await store.refresh()
   const refresher = ev.target as HTMLIonRefresherElement
-
-  // 3. Dire à Ionic que le refresh est terminé
   refresher.complete()
 }
+
 </script>
 
 <style scoped>
